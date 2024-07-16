@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحميل البيانات</title>
+    <!-- <link rel="stylesheet" href="css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.css">
+
+    <script src="js/package/dist/chart.umd.js"></script>
+    <script src='js/bootstrap.min.js'> </script> -->
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css"
+        integrity="sha512-xA6Hp6oezhjd6LiLZynuukm80f8BoZ3OpcEYaqKoCV3HKQDrYjDE1Gu8ocxgxoXmwmSzM4iqPvCsOkQNiu41GA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+</head>
+<style>
+    * {
+        font-family: 'Almarai';
+    }
+
+    .bgimg {
+        background-image: url(img/bg.jpg);
+        height: calc(100vh - 56px);
+        background-size: 100%;
+        position: relative;
+        z-index: -2;
+    }
+
+    .bgimg::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgb(224 211 183 / 66%);
+        z-index: -1;
+    }
+
+
+    .bgimg h1 {
+        height: 100vh;
+        font-size: 8rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        color: #090909;
+    }
+
+    .btn-main,
+    .btn-outline-main:hover {
+        background-color: rgb(224 211 183);
+        border-color: rgb(224 211 183);
+    }
+
+    .btn-outline-main {
+        border-color: rgb(224 211 183);
+        color: #50452d
+    }
+
+    .color-main {
+        color: #bda97d !important;
+    }
+
+    .fs-20 {
+        font-size: 25px;
+    }
+</style>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-bar color-main"></i>
+            </a>
+
+            <div class="  navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html"> الرئيسية </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link color-main" href="charts.html"> عرض الرسوم البيانية</a>
+                    </li>
+
+
+                </ul>
+                <a class="btn btn-outline-main  " href="about.html">من نحن</a>
+
+            </div>
+        </div>
+    </nav>
+    <div class="h1 mx-5 px-5 mt-5 pb-3">
+        عرض الرسوم البيانية
+    </div>
+    <div class=" mx-3 px-5 row align-items-center">
+        <form class="col-6   h5" id="uploadForm">
+            <h3 class="mb-3">
+                تحميل البيانات
+            </h3>
+            <div class="mb-3">
+                <label for="dataFile" class="form-label">اختيار الملف</label>
+                <input type="file" class="form-control" id="dataFile" accept=".json,.csv,.xls,.xlsx" required>
+            </div>
+            <div class="mb-3  ">
+                <label for="chartType" class="form-label">نوع الرسم البياني</label>
+                <select class="form-select" id="chartType" required>
+                    <option value="">اختر نوع الرسم البياني</option>
+                    <option value="line">خط</option>
+                    <option value="bar">شريطي</option>
+                    <option value="pie">دائري</option>
+                    <option value="scatter">نقطي</option>
+                    <option value="radar">شبكي</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-main px-5">تحميل</button>
+
+        </form>
+        <div class="col-6" style=" height: 300px;
+                     max-height: 300px;
+                     border: 1px dashed #e0d3b7;">
+            <canvas id="chartCanvas"></canvas>
+
+        </div>
+
+
+        <div class="col-6"></div>
+        <div class="col-6 mt-4 row" style="gap: 12px;  flex-wrap: nowrap;">
+            <button type="submit" class="btn btn-outline-main col-4" onclick="downloadChart('png', getnameFile())">
+                <i class="fas fa-image"></i>
+                تنزل PNG
+            </button>
+            <button type="submit" class="btn btn-outline-main col-4" onclick="downloadChart('jpg',getnameFile())">
+                <i class="far fa-file-image"></i>
+                تنزل JPG
+            </button>
+            <button type="submit" class="btn btn-outline-main col-4" onclick="downloadChart('svg', getnameFile())">
+                <i class="fas fa-code-branch"></i>
+                تنزل SVG
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body container  mt-4">
+        <div class="h1   mt-5 pb-3" id="titletable">
+
+        </div>
+        <table class="table table-bordered data-table">
+            <thead>
+                <tr id="tableHeaders">
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- <script src='js/xlsx.full.min.js'> </script>
+    <script src='js/papaparse.min.js'> </script>
+    <script src='js/download.js'> </script> -->
+
+    <script src='download.js'> </script>
+    <script>
+        var getnameFile = function () {
+            return document.getElementById('dataFile').files[0].name.split('.')[0];
+        }
+
+        let chart;
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+
+            e.preventDefault();
+            const fileInput = document.getElementById('dataFile');
+            const file = fileInput.files[0];
+            const chartType = document.getElementById('chartType').value;
+            if (file) {
+                const fileName = file.name;
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+
+
+                if (fileExtension === 'csv') {
+                    Papa.parse(file, {
+                        header: true,
+                        complete: function (results) {
+                            const columns = Object.keys(results.data[0]);
+                            drawChart(chartType, results.data, columns);
+                            populateTable(results.data, columns);
+                        }
+                    });
+                } else if (fileExtension === 'json') {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const data = JSON.parse(e.target.result);
+                        const columns = Object.keys(data[0]);
+                        drawChart(chartType, data, columns);
+                        populateTable(data, columns);
+                    };
+                    reader.readAsText(file);
+                } else if (fileExtension === 'xls' || fileExtension === 'xlsx') {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(sheet);
+                        const columns = Object.keys(jsonData[0]);
+                        drawChart(chartType, jsonData, columns);
+                        populateTable(jsonData, columns);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    alert('نوع الملف غير مدعوم');
+                }
+            }
+        });
+
+        function drawChart(chartType, data, columns) {
+            // تدمير الرسم البياني القديم إذا كان موجوداً
+            if (chart) {
+                chart.destroy();
+            }
+
+            // افتراض أن أول عمود هو 'label' والثاني هو 'value'
+            const labelColumn = columns[0];
+            const valueColumns = columns.slice(1); // جميع الأعمدة باستثناء العمود الأول
+
+            const labels = data.map(item => item[labelColumn]);
+            const datasets = valueColumns.map((column, index) => ({
+                label: column,
+                data: data.map(item => item[column]),
+                backgroundColor: `rgba(${75 + index * 40}, 192, 192, 0.2)`,
+                borderColor: `rgba(${75 + index * 40}, 192, 192, 1)`,
+                borderWidth: 1
+            }));
+
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+
+            if (chartType === 'scatter') {
+                const scatterData = data.map(item => ({ x: item[labelColumn], y: item[valueColumns[0]] }));
+                chart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: getnameFile(),
+                            data: scatterData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { beginAtZero: true },
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                chart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: labels,
+                        datasets: datasets,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    },
+                    options: {
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+
+        function populateTable(data, columns) {
+            const tableHeaders = document.getElementById('tableHeaders');
+            const tableBody = document.getElementById('tableBody');
+            const titletable = document.getElementById('titletable');
+
+            tableHeaders.innerHTML = '';
+            tableBody.innerHTML = '';
+            titletable.innerHTML = '';
+
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column;
+                tableHeaders.appendChild(th);
+            });
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach((column, index) => {
+                    const td = document.createElement('td');
+                    td.textContent = row[column];
+                    td.classList.add(index === 0 ? 'label-cell' : 'value-cell');
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+
+            titletable.innerHTML = '<hr /> ' + 'عرض بيانات <b>' + getnameFile() + '</b>';
+
+        }
+
+
+    </script>
+</body>
+
+</html>
